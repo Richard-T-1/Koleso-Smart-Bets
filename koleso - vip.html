@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Koleso Stastia</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+      color: black;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 100%;
+      width: 700px;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: black;
+    }
+    
+    .wheel-container {
+      position: relative;
+      width: 90vw;
+      max-width: 500px;
+      height: 90vw;
+      max-height: 500px;
+      margin: 40px auto;
+      display: none;
+    }
+    
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      transition: transform 8s cubic-bezier(0.32, 0.94, 0.60, 1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      background-color: white;
+      transform-style: preserve-3d;
+    }
+    
+    .wheel-segment {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: center;
+    }
+    
+    .segment {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 50%;
+      transform-origin: bottom right;
+    }
+    
+    .wheel-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24%;
+      max-width: 120px;
+      height: 24%;
+      max-height: 120px;
+      background-color: #0C8ED0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: white;
+      z-index: 10;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      border: 3px solid white;
+      cursor: pointer;
+    }
+    
+    .section-text {
+      position: absolute;
+      transform-origin: center;
+      white-space: nowrap;
+      font-weight: bold;
+      color: white;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      z-index: 5;
+    }
+    
+    .pointer {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 35px solid #FF5252;
+      z-index: 20;
+      filter: drop-shadow(0px 0px 3px rgba(0,0,0,0.3));
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    .modal {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 300px;
+      text-align: center;
+      color: #333;
+    }
+    
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .modal button {
+      padding: 10px 20px;
+      background-color: #0C8ED0;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .modal button:hover {
+      background-color: #0A5CA8;
+    }
+    
+    .greeting {
+      margin: 20px 0;
+      font-size: 24px;
+      color: black;
+      display: none;
+    }
+    
+    .result-label {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: black;
+      min-height: 27px;
+    }
+    
+    .info-frame {
+      background-color: white;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+      width: 100%;
+      display: none;
+    }
+    
+    .info-label {
+      color: #0A5CA8;
+      font-size: 16px;
+      text-align: center;
+    }
+    
+    .start-link {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #ff5722;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 18px;
+      transition: background-color 0.3s;
+    }
+    
+    .start-link:hover {
+      background-color: #0A5CA8;
+    }
+    
+    /* Nový štýl pre admin sekciu */
+    .admin-section {
+      display: none;
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+      width: 100%;
+    }
+    
+    .admin-input {
+      padding: 8px;
+      margin-right: 10px;
+    }
+    
+    /* Nový štýl pre debug panel */
+    .debug-panel {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 20px;
+      text-align: left;
+      width: 100%;
+      display: none;
+    }
+    
+    /* Media queries for smaller screens */
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .wheel-container {
+        margin: 20px auto;
+      }
+      
+      .wheel-center {
+        font-size: 14px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      .greeting {
+        font-size: 20px;
+      }
+      
+      .result-label {
+        font-size: 16px;
+      }
+      
+      .info-label {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Koleso Stastia</h1>
+    
+    <div class="section">
+      <a href="#" class="start-link" id="startLink">Spustit hru</a>
+    </div>
+    
+    <div class="greeting" id="greeting"></div>
+    
+    <div class="wheel-container" id="wheelContainer">
+      <div class="pointer"></div>
+      <div class="wheel" id="wheel"></div>
+      <div class="wheel-center" id="wheelCenter">ZATOCIT</div>
+    </div>
+    
+    <div class="result-label" id="resultLabel"></div>
+    
+    <div class="info-frame" id="infoFrame">
+      <div class="info-label" id="infoLabel"></div>
+    </div>
+    
+    <!-- Admin sekcia pre zobrazenie hesla -->
+    <div class="admin-section" id="adminSection">
+      <h3>Admin Panel</h3>
+      <input type="password" id="adminPassword" class="admin-input" placeholder="Zadajte admin heslo">
+      <button id="adminLogin">Prihlásenie</button>
+      <div id="adminResults" style="margin-top: 15px;"></div>
+    </div>
+    
+    <!-- Debug panel pre vývojárov - pre pomoc s ladením -->
+    <div class="debug-panel" id="debugPanel">
+      <h3>Debug Panel</h3>
+      <div id="debugInfo"></div>
+      <button id="testConnection">Test pripojenia</button>
+    </div>
+  </div>
+  
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Zadajte svoje meno</h2>
+      <p>Prosim, zadajte svoje meno pre pokracovanie:</p>
+      <input type="text" id="nameInput" placeholder="Vase meno">
+      <button id="submitName">Pokracovat</button>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const startLink = document.getElementById('startLink');
+      const overlay = document.getElementById('overlay');
+      const nameInput = document.getElementById('nameInput');
+      const submitButton = document.getElementById('submitName');
+      const greeting = document.getElementById('greeting');
+      const wheelContainer = document.getElementById('wheelContainer');
+      const wheel = document.getElementById('wheel');
+      const wheelCenter = document.getElementById('wheelCenter');
+      const resultLabel = document.getElementById('resultLabel');
+      const infoFrame = document.getElementById('infoFrame');
+      const infoLabel = document.getElementById('infoLabel');
+      const adminSection = document.getElementById('adminSection');
+      const adminPassword = document.getElementById('adminPassword');
+      const adminLogin = document.getElementById('adminLogin');
+      const adminResults = document.getElementById('adminResults');
+      const debugPanel = document.getElementById('debugPanel');
+      const debugInfo = document.getElementById('debugInfo');
+      const testConnectionBtn = document.getElementById('testConnection');
+      
+      let spinning = false;
+      let spinAllowed = true;
+      let currentRotation = 0;
+      let playerName = "";
+      
+      // Funkcia pre logovanie do debug panelu
+      function logToDebug(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `<strong>${timestamp}</strong>: ${message}`;
+        debugInfo.appendChild(logEntry);
+        console.log(message);
+      }
+      
+      // Firebase konfigurácia
+      const firebaseConfig = {
+        apiKey: "AIzaSyAZiqj5XzAc0a0MjGhcSU_ktdL1PYHHPhI",
+        authDomain: "koleso2-6ac67.firebaseapp.com",
+        databaseURL: "https://koleso2-6ac67-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "koleso2-6ac67",
+        storageBucket: "koleso2-6ac67.firebasestorage.app",
+        messagingSenderId: "425859018093",
+        appId: "1:425859018093:web:ca9b9d9a910e19e56e7e64",
+      };
+      
+      logToDebug("Inicializácia Firebase...");
+      
+      // Inicializácia Firebase
+      try {
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        logToDebug("Firebase inicializovaný úspešne");
+        
+        // Kontrola pripojenia k Firebase
+        const connectedRef = database.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+          if (snap.val() === true) {
+            logToDebug("✅ Pripojené k Firebase databáze");
+          } else {
+            logToDebug("❌ Nepripojené k Firebase databáze");
+          }
+        });
+        
+        // Test pripojenia k Firebase tlačidlom
+        testConnectionBtn.addEventListener('click', function() {
+          logToDebug("Spustený test pripojenia...");
+          
+          database.ref("test_connection").set({
+            timestamp: new Date().toISOString(),
+            message: "Test pripojenia"
+          })
+          .then(() => {
+            logToDebug("✅ Test zápisu úspešný");
+            return database.ref("test_connection").once("value");
+          })
+          .then((snapshot) => {
+            logToDebug("✅ Test čítania úspešný: " + JSON.stringify(snapshot.val()));
+          })
+          .catch((error) => {
+            logToDebug("❌ Chyba pri teste pripojenia: " + error.message);
+          });
+        });
+      
+        // Admin heslo - pre bezpečnosť by malo byť zmenené
+        const ADMIN_PASSWORD = "kolesoAdmin123";
+        
+        // Definované typy sekcií s farbami a textom
+        const sections = [
+          { color: "lightblue", text: "10€ zlava" },
+          { color: "red", text: "SMOLA" },
+          { color: "royalblue", text: "25% zlava" },
+          { color: "lightgray", text: "DALSI SPIN" },
+          { color: "red", text: "SMOLA" },
+          { color: "green", text: "50 % zlava" },
+          { color: "lightblue", text: "10€ zlava" },
+          { color: "red", text: "SMOLA" },
+          { color: "royalblue", text: "25% zlava" },
+          { color: "lightgray", text: "DALSI SPIN" },
+          { color: "red", text: "SMOLA" },
+          { color: "green", text: "50% zlava" }
+        ];
+        
+        // Pravdepodobnosti pre každý typ výhry
+        const probabilities = {
+          "SMOLA": 30,
+          "DALSI SPIN": 10,
+          "10€ zlava": 30,
+          "25% zlava": 5,
+          "50% zlava": 25
+        };
+        
+        // Funkcia pre vytvorenie kolesa s SVG
+        function createWheel() {
+          wheel.innerHTML = '';
+          
+          const segmentAngle = 360 / sections.length;
+          // Calculate radius based on container size for responsive design
+          const containerWidth = wheelContainer.clientWidth;
+          const radius = containerWidth / 2;
+          const svgNS = "http://www.w3.org/2000/svg";
+          
+          // Vytvorenie SVG elementu
+          const svg = document.createElementNS(svgNS, "svg");
+          svg.setAttribute("width", "100%");
+          svg.setAttribute("height", "100%");
+          svg.setAttribute("viewBox", "0 0 " + containerWidth + " " + containerWidth);
+          
+          const centerX = containerWidth / 2;
+          const centerY = containerWidth / 2;
+          
+          // Vytvorenie každého segmentu ako path v SVG
+          for (let i = 0; i < sections.length; i++) {
+            const startAngle = i * segmentAngle;
+            const endAngle = (i + 1) * segmentAngle;
+            
+            const startRad = (startAngle - 90) * Math.PI / 180;
+            const endRad = (endAngle - 90) * Math.PI / 180;
+            
+            const x1 = centerX + radius * Math.cos(startRad);
+            const y1 = centerY + radius * Math.sin(startRad);
+            const x2 = centerX + radius * Math.cos(endRad);
+            const y2 = centerY + radius * Math.sin(endRad);
+            
+            // Vytvorenie path pre segment
+            const path = document.createElementNS(svgNS, "path");
+            path.setAttribute("d", `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z`);
+            path.setAttribute("fill", sections[i].color);
+            path.setAttribute("stroke", "white");
+            path.setAttribute("stroke-width", "1");
+            path.setAttribute("data-index", i);
+            
+            svg.appendChild(path);
+            
+            // Pridanie textu
+            const midAngle = (startAngle + endAngle) / 2 - 90;
+            const midRad = midAngle * Math.PI / 180;
+            const textDistance = radius * 0.76; // Position text at 76% of radius from center
+            const textX = centerX + textDistance * Math.cos(midRad);
+            const textY = centerY + textDistance * Math.sin(midRad);
+            
+            const text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", textX);
+            text.setAttribute("y", textY);
+            text.setAttribute("fill", "white");
+            text.setAttribute("font-size", radius * 0.056); // Responsive font size
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("dominant-baseline", "middle");
+            text.setAttribute("transform", `rotate(${midAngle + 90} ${textX} ${textY})`);
+            text.setAttribute("text-shadow", "1px 1px 2px rgba(0,0,0,0.5)");
+            text.textContent = sections[i].text;
+            
+            svg.appendChild(text);
+          }
+          
+          wheel.appendChild(svg);
+        }
+        
+        // Aktualizácia tlačidla v strede kolesa
+        function updateWheelCenter() {
+          wheelCenter.textContent = spinAllowed ? 'ZATOCIT' : 'KONIEC';
+          wheelCenter.style.backgroundColor = spinAllowed ? '#0C8ED0' : 'gray';
+        }
+        
+        // Funkcia na zistenie, ktorý segment je pod šípkou po zastavení kolesa
+        function getSegmentUnderPointer() {
+          // Získame aktuálny uhol rotácie kolesa (modulo 360 aby sme dostali hodnotu 0-359)
+          const currentAngle = (currentRotation % 360 + 360) % 360;
+          
+          // Segmenty sú rovnomerne rozdelené
+          const segmentAngle = 360 / sections.length;
+          
+          // Vypočítame index segmentu pod šípkou (šípka je na vrchu - 0°)
+          // Keďže koleso rotuje v smere hodinových ručičiek, musíme vypočítať, 
+          // ktorý segment je pod šípkou
+          let segmentIndex = Math.floor(currentAngle / segmentAngle);
+          
+          // Opravený výpočet - šípka je na vrchu (0°), takže musíme správne indexovať
+          return (sections.length - segmentIndex - 1) % sections.length;
+        }
+        
+        // Funkcia na získanie váženej náhodnej výhry na základe pravdepodobností
+        function getWeightedPrize() {
+          // Vytvorenie mapovania typov výhier na indexy
+          const prizeIndices = {};
+          sections.forEach((section, index) => {
+            if (!prizeIndices[section.text]) {
+              prizeIndices[section.text] = [];
+            }
+            prizeIndices[section.text].push(index);
+          });
+          
+          // Vytvorenie váženého zoznamu
+          const allPrizes = [];
+          const weights = [];
+          
+          Object.entries(prizeIndices).forEach(([prize, indices]) => {
+            indices.forEach(idx => {
+              allPrizes.push(idx);
+              weights.push(probabilities[prize] || 0);
+            });
+          });
+          
+          // Výpočet kumulatívnych váh
+          const cumulativeWeights = [];
+          let total = 0;
+          weights.forEach(weight => {
+            total += weight;
+            cumulativeWeights.push(total);
+          });
+          
+          // Výber náhodného indexu na základe váh
+          const randomValue = Math.random() * total;
+          for (let i = 0; i < cumulativeWeights.length; i++) {
+            if (randomValue < cumulativeWeights[i]) {
+              return allPrizes[i];
+            }
+          }
+          
+          // Záloha
+          return Math.floor(Math.random() * sections.length);
+        }
+        
+        // Funkcia na uloženie výsledku do Firebase
+        function saveResultToFirebase(playerName, result) {
+          logToDebug("Pokus o uloženie výsledku do Firebase: " + playerName + ", " + result);
+          
+          const timestamp = new Date().toISOString();
+          const resultData = {
+            name: playerName,
+            prize: result,
+            timestamp: timestamp,
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString()
+          };
+          
+          logToDebug("Data na uloženie: " + JSON.stringify(resultData));
+          
+          // Uloženie do Firebase do kolekcie 'wheel_results' namiesto 'results'
+          return database.ref('wheel_results').push(resultData)
+            .then((ref) => {
+              logToDebug("✅ Výsledok bol úspešne uložený s kľúčom: " + ref.key);
+              return ref;
+            })
+            .catch((error) => {
+              logToDebug("❌ Chyba pri ukladaní výsledku: " + error.message);
+              alert("Nastala chyba pri ukladaní výsledku: " + error.message);
+              throw error;
+            });
+        }
+        
+        // Funkcia na načítanie výsledkov z Firebase
+        function loadResultsFromFirebase() {
+          logToDebug("Pokus o načítanie výsledkov z Firebase");
+          
+          database.ref('wheel_results').orderByChild('timestamp').limitToLast(50).once('value')
+            .then((snapshot) => {
+              logToDebug("Dáta načítané z Firebase: " + (snapshot.val() ? "áno" : "žiadne dáta"));
+              const results = [];
+              snapshot.forEach((childSnapshot) => {
+                results.push(childSnapshot.val());
+              });
+              
+              // Zobrazenie výsledkov v admin paneli
+              displayResults(results.reverse());
+            })
+            .catch((error) => {
+              logToDebug("❌ Chyba pri načítaní dát: " + error.message);
+              adminResults.innerHTML = "<p>Chyba pri načítaní dát: " + error.message + "</p>";
+            });
+        }
+        
+        // Funkcia na zobrazenie výsledkov v admin paneli
+        function displayResults(results) {
+          if (results.length === 0) {
+            adminResults.innerHTML = "<p>Zatiaľ nie sú k dispozícii žiadne výsledky.</p>";
+            return;
+          }
+          
+          let html = "<h4>Posledné výsledky:</h4>";
+          html += "<div style='overflow-x: auto;'>";
+          html += "<table style='width: 100%; border-collapse: collapse;'>";
+          html += "<tr><th style='border: 1px solid #ddd; padding: 8px;'>Meno</th><th style='border: 1px solid #ddd; padding: 8px;'>Výhra</th><th style='border: 1px solid #ddd; padding: 8px;'>Dátum</th><th style='border: 1px solid #ddd; padding: 8px;'>Čas</th></tr>";
+          
+          results.forEach(result => {
+            html += `<tr>
+              <td style='border: 1px solid #ddd; padding: 8px;'>${result.name}</td>
+              <td style='border: 1px solid #ddd; padding: 8px;'>${result.prize}</td>
+              <td style='border: 1px solid #ddd; padding: 8px;'>${result.date}</td>
+              <td style='border: 1px solid #ddd; padding: 8px;'>${result.time}</td>
+            </tr>`;
+          });
+          
+          html += "</table>";
+          html += "</div>";
+          adminResults.innerHTML = html;
+        }
+        
+        // Po kliknutí na odkaz Spustit
+        startLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          overlay.style.display = 'flex';
+        });
+        
+        // Pridanie funkcie na zobrazenie admin panela pomocou klávesovej skratky (napr. Alt+A)
+        document.addEventListener('keydown', function(e) {
+          if (e.altKey && e.key === 'a') {
+            adminSection.style.display = adminSection.style.display === 'none' ? 'block' : 'none';
+          }
+          
+          // Pridanie funkcie na zobrazenie debug panela (Alt+D)
+          if (e.altKey && e.key === 'd') {
+            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+          }
+        });
+        
+        // Po kliknutí na tlačidlo admin prihlásenia
+        adminLogin.addEventListener('click', function() {
+          if (adminPassword.value === ADMIN_PASSWORD) {
+            loadResultsFromFirebase();
+          } else {
+            alert("Nesprávne heslo!");
+          }
+        });
+        
+        // Po kliknutí na tlačidlo potvrdiť
+        submitButton.addEventListener('click', function() {
+          playerName = nameInput.value.trim();
+          
+          if (playerName === '') {
+            alert('Prosím, zadajte svoje meno');
+            return;
+          }
+          
+          logToDebug("Zadané meno: " + playerName);
+          
+          // Skrytie prekrytia a zobrazenie kolesa
+          overlay.style.display = 'none';
+          startLink.style.display = 'none';
+          
+          // Zobrazenie pozdravu
+          greeting.textContent = `Ahoj, ${playerName}, vytoc si zlavu ! `;
+          greeting.style.display = 'block';
+          
+          // Zobrazenie kolesa
+          wheelContainer.style.display = 'block';
+          
+          // Vytvorenie kolesa
+          createWheel();
+          updateWheelCenter();
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+          if (wheelContainer.style.display !== 'none') {
+            createWheel();
+          }
+        });
+        
+        // Po kliknutí na stred kolesa
+        wheelCenter.addEventListener('click', function() {
+          if (spinAllowed && !spinning) {
+            spinTheWheel();
+          }
+        });
+        
+        // Funkcia na točenie kolesa
+        function spinTheWheel() {
+          if (spinning) return;
+          
+          logToDebug("Začínam točenie kolesa");
+          
+          spinning = true;
+          resultLabel.textContent = "";
+          infoFrame.style.display = 'none';
+          
+          // Nastavíme väčší počet otáčok (3-6) pre pomalšie otáčanie
+          const extraRotations = 3 + Math.random() * 3;
+          
+          // Nastavíme náhodný uhol pre extra variabilitu
+          const randomAngle = Math.random() * 360;
+          
+          // Vypočítame celkový uhol otočenia
+          const targetAngle = extraRotations * 360 + randomAngle;
+          
+          logToDebug("Otáčanie kolesa o " + targetAngle.toFixed(2) + " stupňov");
+          
+          // Aplikujeme rotáciu s efektom spomalenia
+          currentRotation += targetAngle;
+          wheel.style.transform = `rotate(${currentRotation}deg)`;
+          
+          // Zobraziť výsledok po dokončení animácie
+          // Upravená doba na 8000ms, aby bola synchronizovaná s CSS transition
+          setTimeout(function() {
+            spinning = false;
+            // Určíme, ktorý segment je pod šípkou
+            const winningIndex = getSegmentUnderPointer();
+            logToDebug("Koleso sa zastavilo, výherný index: " + winningIndex + " (" + sections[winningIndex].text + ")");
+            showResult(winningIndex);
+          }, 8000); // Upravené na 8 sekúnd
+        }
+        
+        // Funkcia na zobrazenie výsledku - používa segment, ktorý je skutočne pod šípkou
+       // Dokončenie funkcie showResult
+
+function showResult(winningIndex) {
+  const result = sections[winningIndex].text;
+  logToDebug("Zobrazujem výsledok: " + result);
+  
+  resultLabel.textContent = `Vyhral si: ${result}`;
+  infoFrame.style.display = 'block';
+  
+  // Uloženie výsledku do Firebase
+  saveResultToFirebase(playerName, result)
+    .then(() => {
+      logToDebug("Výsledok úspešne uložený do Firebase");
+    })
+    .catch((error) => {
+      logToDebug("❌ Chyba pri ukladaní výsledku: " + error);
+    });
+  
+  // Aktualizácia stavu tlačidla točenia a informačného textu na základe výsledku
+  if (result === "DALSI SPIN") {
+    infoLabel.textContent = "Otoč znova";
+    spinAllowed = true;
+  } else {
+    // Pre všetky ostatné výsledky, blokovanie ďalšieho točenia
+    spinAllowed = false;
+    
+    if (result === "SMOLA") {
+      infoLabel.textContent = "Skoda, skus to nabuduce";
+    } else { 
+      infoLabel.textContent = "Gratulujem ! Kód na zľavu ti príde do správy";
+    }
+  }
+  
+  // Aktualizácia tlačidla v strede kolesa
+  updateWheelCenter();
+}
+
+// Automaticky zobraziť debug panel pre vývojárov - môžete odstrániť pre produkčnú verziu
+// debugPanel.style.display = 'block';
+
+// Počiatočný test pripojenia k Firebase
+setTimeout(function() {
+  testConnectionBtn.click();
+}, 1000);
+
+      } catch (error) {
+        console.error("Chyba pri inicializácii Firebase:", error);
+        alert("Nastala chyba pri inicializácii Firebase: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
