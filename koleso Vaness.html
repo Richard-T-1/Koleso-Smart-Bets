@@ -405,27 +405,27 @@
         
         // Definované typy sekcií s farbami a textom
         const sections = [
+          { color: "lightblue", text: "10€ zlava" },
+          { color: "red", text: "SMOLA" },
+          { color: "royalblue", text: "25% zlava" },
           { color: "lightgray", text: "DALSI SPIN" },
           { color: "red", text: "SMOLA" },
-          { color: "royalblue", text: "RANDE" },
+          { color: "green", text: "50 % zlava" },
+          { color: "lightblue", text: "10€ zlava" },
+          { color: "red", text: "SMOLA" },
+          { color: "royalblue", text: "25% zlava" },
           { color: "lightgray", text: "DALSI SPIN" },
           { color: "red", text: "SMOLA" },
-          { color: "green", text: "VYLET" },
-          { color: "lightgray", text: "DALSI SPIN" },
-          { color: "red", text: "SMOLA" },
-          { color: "royalblue", text: "RANDE" },
-          { color: "lightgray", text: "DALSI SPIN" },
-          { color: "red", text: "SMOLA" },
-          { color: "green", text: "PRSTEN" }
+          { color: "green", text: "50% zlava" }
         ];
         
         // Pravdepodobnosti pre každý typ výhry
         const probabilities = {
-          "SMOLA": 45,
+          "SMOLA": 30,
           "DALSI SPIN": 10,
-          "RANDE": 15,
-          "VYLET": 5,
-          "PRSTEN": 25
+          "10€ zlava": 30,
+          "25% zlava": 5,
+          "50% zlava": 25
         };
         
         // Funkcia pre vytvorenie kolesa s SVG
@@ -678,7 +678,7 @@
           startLink.style.display = 'none';
           
           // Zobrazenie pozdravu
-          greeting.textContent = `Ahoj, ${playerName}! Pripraveny zatocit kolesom?`;
+          greeting.textContent = `Ahoj, ${playerName}, vytoc si zlavu ! `;
           greeting.style.display = 'block';
           
           // Zobrazenie kolesa
@@ -766,14 +766,10 @@ function showResult(winningIndex) {
     // Pre všetky ostatné výsledky, blokovanie ďalšieho točenia
     spinAllowed = false;
     
-    if (result === "RANDE") {
-      infoLabel.textContent = "Gratulujem, vyhrala si rande!";
-    } else if (result === "VYLET") {
-      infoLabel.textContent = "Gratulujem, zoberiem ta na vylet!";
-    } else if (result === "PRSTEN") {
-      infoLabel.textContent = "Gratulujem, poziadam ta o ruku";
-    } else { // SMOLA
+    if (result === "SMOLA") {
       infoLabel.textContent = "Skoda, skus to nabuduce";
+    } else { 
+      infoLabel.textContent = "Gratulujem ! Kód na zľavu ti príde do správy";
     }
   }
   
