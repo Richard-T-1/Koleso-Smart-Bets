@@ -758,29 +758,27 @@ function showResult(winningIndex) {
       logToDebug("❌ Chyba pri ukladaní výsledku: " + error);
     });
   
-  // Aktualizácia stavu tlačidla točenia a informačného textu na základe výsledku
+
   if (result === "DALSI SPIN") {
-    infoLabel.textContent = "Otoč znova";
-    spinAllowed = true;
+      infoLabel.textContent = "Otoč znova";
+      spinAllowed = true;
   } else {
-    // Pre všetky ostatné výsledky, blokovanie ďalšieho točenia
-    spinAllowed = false;
-    
-    if (result === "SMOLA") {
-      infoLabel.textContent = "Skoda, skus to nabuduce";
-    } else { 
-      infoLabel.textContent = "Gratulujem ! Kód na zľavu ti príde do správy";
-    }
+      spinAllowed = false;
+      
+      if (result === "SMOLA") {
+          infoLabel.textContent = "Škoda, skus to nabudúce";
+      } else if (result === "10€ zlava") {
+          infoLabel.textContent = "Gratulujem ! Zľavový kód je ZLAVA1";
+      } else if (result === "25% zlava") {
+          infoLabel.textContent = "Gratulujem ! Zľavový kód je ZLAVA2";
+      } else if (result === "50% zlava") {
+          infoLabel.textContent = "Gratulujem ! Zľavový kód je MEGAZLAVA";
+      }
   }
-  
-  // Aktualizácia tlačidla v strede kolesa
+
   updateWheelCenter();
 }
 
-// Automaticky zobraziť debug panel pre vývojárov - môžete odstrániť pre produkčnú verziu
-// debugPanel.style.display = 'block';
-
-// Počiatočný test pripojenia k Firebase
 setTimeout(function() {
   testConnectionBtn.click();
 }, 1000);
