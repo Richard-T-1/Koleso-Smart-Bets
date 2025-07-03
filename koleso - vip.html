@@ -768,11 +768,11 @@ function showResult(winningIndex) {
       if (result === "SMOLA") {
           infoLabel.textContent = "Škoda, skus to nabudúce";
       } else if (result === "10€ zlava") {
-          infoLabel.textContent = "Gratulujem ! Zľavový kód je ZLAVA1";
+          infoLabel.innerHTML = "Gratulujem ! Zľavový kód je ZLAVA1<br>link: https://buy.stripe.com/cNi8wQgzwedX7VP7xW1ZS0d";
       } else if (result === "25% zlava") {
-          infoLabel.textContent = "Gratulujem ! Zľavový kód je ZLAVA2";
+          infoLabel.innerHTML = "Gratulujem ! Zľavový kód je ZLAVA2<br>link: https://buy.stripe.com/cNi8wQgzwedX7VP7xW1ZS0d";
       } else if (result === "50% zlava") {
-          infoLabel.textContent = "Gratulujem ! Zľavový kód je MEGAZLAVA";
+          infoLabel.innerHTML = "Gratulujem ! Zľavový kód je MEGAZLAVA<br>link: https://buy.stripe.com/cNi8wQgzwedX7VP7xW1ZS0d";
       }
   }
 
